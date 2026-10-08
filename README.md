@@ -10,9 +10,9 @@ Tek bir PowerShell dosyasından oluşur, istenirse `.exe` haline getirilebilir.
 
 | Dosya | Açıklama |
 |---|---|
-| `ProxmoxWinIso.ps1` | Programın kendisi (arayüz + ISO oluşturma motoru tek dosyada) |
-| `Build-EXE.cmd` | `ps2exe` ile `ProxmoxWinIso.exe` üretir |
-| `ProxmoxWinIso.ico` | Program ikonu |
+| `WindowsIsoBuilder.ps1` | Programın kendisi (arayüz + ISO oluşturma motoru tek dosyada) |
+| `Build-EXE.cmd` | `ps2exe` ile `WindowsIsoBuilder.exe` üretir |
+| `WindowsIsoBuilder.ico` | Program ikonu |
 
 ## Gereksinimler
 
@@ -24,11 +24,11 @@ Tek bir PowerShell dosyasından oluşur, istenirse `.exe` haline getirilebilir.
 
 ## Çalıştırma
 
-**EXE olarak:** `Build-EXE.cmd` dosyasını çift tıklayın. `ps2exe` modülü yoksa kurulur ve aynı klasörde `ProxmoxWinIso.exe` oluşur.
+**EXE olarak:** `Build-EXE.cmd` dosyasını çift tıklayın. `ps2exe` modülü yoksa kurulur ve aynı klasörde `WindowsIsoBuilder.exe` oluşur.
 
 **Doğrudan script olarak:**
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\ProxmoxWinIso.ps1
+powershell -ExecutionPolicy Bypass -File .\WindowsIsoBuilder.ps1
 ```
 
 Arayüz dili Windows diline göre otomatik seçilir (Türkçe / English), sağ üstteki listeden değiştirilebilir.
@@ -45,7 +45,7 @@ Arayüz dili Windows diline göre otomatik seçilir (Türkçe / English), sağ �
 | **Çıktı** | **ISO dosyası** veya **USB disk (kurulum)**. USB seçiliyken **"Hazır ISO'yu değiştirmeden yaz"** işaretlenirse seçilen ISO hiç düzenlenmeden yazılır (düzenleme seçenekleri kapanır) |
 | **Çıktı ISO** | *(ISO modunda)* Oluşacak ISO'nun yolu. Seçilen sürüme göre otomatik adlandırılır (ör. `Win11-Pro-Custom.iso`) |
 | **USB disk** | *(USB modunda)* Yazılacak disk. Varsayılan olarak sadece USB/SD bağlantılı diskler listelenir; **Tüm diskler** işaretlenirse dahili diskler (SATA, NVMe vb.) de görünür. Yeni takılan disk için **Yenile** |
-| **Çalışma dizini** | Geçici dosyalar (varsayılan `C:\ProxmoxWinBuild`). Her çalıştırmada temizlenir |
+| **Çalışma dizini** | Geçici dosyalar (varsayılan `C:\WindowsIsoBuild`). Her çalıştırmada temizlenir |
 | **Sürüm** | ISO'daki sürümlerden biri; varsayılan olarak *Pro* seçilir. ISO'ya yalnızca bu sürüm konur |
 | **Kullanıcı adı / Şifre** | Otomatik oluşturulacak yerel yönetici hesabı (şifre en az 4 karakter) |
 | **Dil** | Kurulum ve sistem dili (ör. `tr-TR`, `en-US`) |
@@ -53,7 +53,7 @@ Arayüz dili Windows diline göre otomatik seçilir (Türkçe / English), sağ �
 | **Otomatik kurulum** | `autounattend.xml` ekler |
 | **Windows özellikleri** | ISO'da hazır açık gelecek isteğe bağlı özellikler |
 
-Ana düğme seçime göre **ISO OLUŞTUR** veya **USB'YE YAZ** olur. İşlem sırasında ilerleme alttaki log alanında canlı görünür; **İptal** ile durdurulabilir. Tam log: `%TEMP%\ProxmoxWinIso-build.log`
+Ana düğme seçime göre **ISO OLUŞTUR** veya **USB'YE YAZ** olur. İşlem sırasında ilerleme alttaki log alanında canlı görünür; **İptal** ile durdurulabilir. Tam log: `%TEMP%\WindowsIsoBuilder-build.log`
 
 ---
 
@@ -149,9 +149,9 @@ Kurulumdan sonra ISO içindeki `\virtio\` klasöründen **guest agent** MSI'ın�
 - Varsayılan kullanıcı `Inversa`, şifre `1234` — arayüzden değiştirin.
 - USB'ye yazma yarıda kesilirse disk kullanılamaz durumda kalabilir; yazmayı tekrar başlatmanız yeterlidir.
 - Bir işlem yarıda kalırsa (iptal, elektrik kesintisi vb.) bir sonraki çalıştırmada eski bağlantılar otomatik temizlenir. Temizlenemezse yönetici komut isteminde `dism /cleanup-wim` çalıştırıp çalışma dizinini silin veya bilgisayarı yeniden başlatın.
-- Arayüzsüz kullanım: program çalışırken motor `%TEMP%\Build-ProxmoxWinIso.ps1` olarak yazılır; bu dosya parametrelerle doğrudan da çalıştırılabilir:
+- Arayüzsüz kullanım: program çalışırken motor `%TEMP%\Build-WindowsIso.ps1` olarak yazılır; bu dosya parametrelerle doğrudan da çalıştırılabilir:
   ```powershell
-  .\Build-ProxmoxWinIso.ps1 -WindowsIso C:\iso\Win11.iso -VirtioIso C:\iso\virtio-win.iso `
+  .\Build-WindowsIso.ps1 -WindowsIso C:\iso\Win11.iso -VirtioIso C:\iso\virtio-win.iso `
       -OutputIso C:\iso\Win11-Proxmox.iso -Edition "Windows 11 Pro" -UserName Kullanici -Password "Sifre123" `
       -Features NetFx3 [-KeepBloat] [-SkipUnattend]
   ```

@@ -1,24 +1,24 @@
 ﻿<#
     Windows ISO Builder (10 / 11) - tek dosya surum / single-file version
-    Dogrudan: powershell -ExecutionPolicy Bypass -File .\ProxmoxWinIso.ps1
+    Dogrudan: powershell -ExecutionPolicy Bypass -File .\WindowsIsoBuilder.ps1
     EXE icin: Build-EXE.cmd
 #>
 $BuilderSource = @'
 <#
 .SYNOPSIS
-    Windows 11 ISO'sunu Proxmox için hazırlar: VirtIO sürücülerini enjekte eder,
+    Windows 10/11 ISO'sunu özelleştirir: VirtIO / ek sürücüleri enjekte eder,
     gereksiz paketleri kaldırır, TPM/online hesap kontrollerini atlatan autounattend ekler,
-    yeni bir ISO üretir.
+    sonucu yeni bir ISO olarak ya da doğrudan USB kurulum diski olarak yazar.
 
 .EXAMPLE
-    .\Build-ProxmoxWinIso.ps1 -WindowsIso C:\iso\Win11.iso -VirtioIso C:\iso\virtio-win.iso `
+    .\Build-WindowsIso.ps1 -WindowsIso C:\iso\Win11.iso -VirtioIso C:\iso\virtio-win.iso `
         -OutputIso C:\iso\Win11-Proxmox.iso -Edition "Windows 11 Pro" -UserName Inversa -Password "1234"
 
 .EXAMPLE
     # ISO yerine dogrudan USB diske yaz (Disk numarasi ve imzasi arayuzden gelir)
-    .\Build-ProxmoxWinIso.ps1 -WindowsIso C:\iso\Win11.iso -Target Usb -UsbDisk 2 -UsbDiskSig "<ad>|<boyut>|<seri>"
+    .\Build-WindowsIso.ps1 -WindowsIso C:\iso\Win11.iso -Target Usb -UsbDisk 2 -UsbDiskSig "<ad>|<boyut>|<seri>"
     # Hazir ISO'yu degistirmeden USB'ye yaz
-    .\Build-ProxmoxWinIso.ps1 -WindowsIso C:\iso\Win11.iso -WriteOnly -UsbDisk 2 -UsbDiskSig "<ad>|<boyut>|<seri>"
+    .\Build-WindowsIso.ps1 -WindowsIso C:\iso\Win11.iso -WriteOnly -UsbDisk 2 -UsbDiskSig "<ad>|<boyut>|<seri>"
 
 .NOTES
     Gereksinimler: Windows 10/11, yönetici hakları, Windows ADK "Deployment Tools" (oscdimg, sadece ISO çıktısı için).
@@ -36,7 +36,7 @@ param(
     [switch]$AllowAnyDisk,
     [switch]$WriteOnly,
     [string]$Edition  = "Windows 11 Pro",
-    [string]$WorkDir  = "C:\ProxmoxWinBuild",
+    [string]$WorkDir  = "C:\WindowsIsoBuild",
     [string]$UserName = "Inversa",
     [string]$Password = "1234",
     [string]$Language = "tr-TR",
@@ -132,7 +132,7 @@ function Write-Usb([string]$SourceDir) {
     Log ("USB disk siliniyor ve hazirlaniyor: Disk {0} - {1} ({2:N1} GB)" -f $disk.Number, $disk.FriendlyName, ($disk.Size / 1GB))
     # Diskteki acik birimleri birak (Gezgin vb. kilitlemesin); cikarilabilir medyada desteklenmez, sorun degil
     try { Set-Disk -Number $disk.Number -IsOffline $true -ErrorAction Stop; Set-Disk -Number $disk.Number -IsOffline $false -ErrorAction Stop } catch { }
-    $dp = Join-Path $env:TEMP "ProxmoxWinIso-diskpart.txt"
+    $dp = Join-Path $env:TEMP "WindowsIsoBuilder-diskpart.txt"
     @(
         "select disk $($disk.Number)",
         "attributes disk clear readonly noerr",
@@ -519,7 +519,7 @@ start explorer.exe
     RegSet $as Version "1,0,0,0" REG_SZ
     RegSet $as StubPath 'wscript.exe //B //Nologo "C:\Windows\Setup\Scripts\UserSetup.vbs"' REG_SZ
     RegSet $as IsInstalled 1
-    Reg @("add", $as, "/ve", "/t", "REG_SZ", "/d", "ProxmoxWinIso Kullanici Ayarlari", "/f")
+    Reg @("add", $as, "/ve", "/t", "REG_SZ", "/d", "WindowsIsoBuilder Kullanici Ayarlari", "/f")
 
     # Gorev cubugu varsayilan sabitlemeleri: sadece Dosya Gezgini ve Edge (Outlook/Store stub'lari gelmez)
     if (-not $KeepBloat) {
@@ -718,7 +718,7 @@ Add-Type -AssemblyName System.Drawing
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
 # Gomulu builder'i gecici dosyaya yaz
-$builder = Join-Path $env:TEMP "Build-ProxmoxWinIso.ps1"
+$builder = Join-Path $env:TEMP "Build-WindowsIso.ps1"
 [System.IO.File]::WriteAllText($builder, $BuilderSource, (New-Object System.Text.UTF8Encoding $true))
 
 # ---------- Arayuz dili / UI language ----------
@@ -887,7 +887,7 @@ $form.MaximizeBox = $false
 $form.Font = New-Object System.Drawing.Font("Segoe UI", 9)
 try {
     $self = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
-    $icoFile = Join-Path (Split-Path $self -Parent) "ProxmoxWinIso.ico"
+    $icoFile = Join-Path (Split-Path $self -Parent) "WindowsIsoBuilder.ico"
     if ($self -notmatch 'powershell|pwsh') { $form.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($self) }
     elseif (Test-Path $icoFile) { $form.Icon = New-Object System.Drawing.Icon($icoFile) }
 } catch { }
@@ -1007,7 +1007,7 @@ function Get-PathDiskNumber($path) {
 
 $y += 35
 Add-Label (L 'l_work') 20 ($y+3) | Out-Null
-$txtWork = Add-TextBox 150 $y 480 "C:\ProxmoxWinBuild"
+$txtWork = Add-TextBox 150 $y 480 "C:\WindowsIsoBuild"
 
 $y += 45
 Add-Label (L 'l_ed') 20 ($y+3) | Out-Null
@@ -1206,7 +1206,7 @@ $btnBuild.Add_Click({
     $txtLog.Clear()
     $txtLog.AppendText((L $(if ($raw) { 'starting_raw' } else { 'starting' })) + "`r`n")
 
-    $script:logFile = Join-Path $env:TEMP "ProxmoxWinIso-build.log"
+    $script:logFile = Join-Path $env:TEMP "WindowsIsoBuilder-build.log"
     Remove-Item $script:logFile -ErrorAction SilentlyContinue
     $script:logPos = 0
 

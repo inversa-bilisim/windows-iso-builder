@@ -1,0 +1,4 @@
+# Windows betikleri Windows'ta CRLF ile cikarilsin (cmd.exe LF ile hatali calisabilir)
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.ico binary

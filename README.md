@@ -1,164 +1,170 @@
 # Windows ISO Builder (10 / 11)
 
-Orijinal bir Windows 10 veya Windows 11 ISO'sundan **temizlenmiş, sürücüleri eklenmiş ve otomatik kurulan** yeni bir ISO üreten ya da bunu doğrudan **USB diske yazan** grafik arayüzlü araç. Hazır bir ISO'yu Rufus gibi değiştirmeden USB'ye yazmak için de kullanılabilir. Öncelikle **Proxmox** sanal makineleri için tasarlandı (VirtIO sürücüleri), ama üretilen ISO normal bilgisayarlarda da kullanılabilir.
+**English** | [Türkçe](README.tr.md)
 
-Tek bir PowerShell dosyasından oluşur, istenirse `.exe` haline getirilebilir.
+A GUI tool that turns an original Windows 10 or Windows 11 ISO into a **debloated, driver-injected, unattended-install** ISO, or writes it directly to a **USB drive**. It can also write any existing ISO to USB as-is, like Rufus. Originally designed for **Proxmox** virtual machines (VirtIO drivers), but the result works on regular PCs too.
+
+It is a single PowerShell file and can optionally be compiled to an `.exe`.
+
+**Download:** get the ready-to-run `WindowsIsoBuilder.exe` from the [Releases](https://github.com/inversa-bilisim/windows-iso-builder/releases) page.
 
 ---
 
-## Dosyalar
+## Files
 
-| Dosya | Açıklama |
+| File | Description |
 |---|---|
-| `WindowsIsoBuilder.ps1` | Programın kendisi (arayüz + ISO oluşturma motoru tek dosyada) |
-| `Build-EXE.cmd` | `ps2exe` ile `WindowsIsoBuilder.exe` üretir |
-| `WindowsIsoBuilder.ico` | Program ikonu |
+| `WindowsIsoBuilder.ps1` | The program itself (GUI + build engine in one file) |
+| `Build-EXE.cmd` | Builds `WindowsIsoBuilder.exe` with `ps2exe` |
+| `WindowsIsoBuilder.ico` | Program icon |
 
-## Gereksinimler
+## Requirements
 
-- Windows 10 veya 11 (programın çalıştığı bilgisayar)
-- Yönetici hakları — program yetkisiz açılırsa kendini yönetici olarak yeniden başlatır
-- **Windows ADK – Deployment Tools** (`oscdimg.exe`) — **sadece ISO dosyası oluşturmak için** gerekir; kurulu değilse "ISO OLUŞTUR"a basıldığında winget ile indirip kurmayı önerir (~100 MB). USB'ye yazarken gerekmez
-- Çalışma dizini için **~15 GB boş alan** (hazır ISO yazılırken sadece install.wim kadar, ~6 GB)
-- Süre: disk hızına göre **20–40 dakika** (hazır ISO'yu USB'ye yazmak 5–20 dakika)
+- Windows 10 or 11 (the machine running the program)
+- Administrator rights — if started without them, the program relaunches itself elevated
+- **Windows ADK – Deployment Tools** (`oscdimg.exe`) — **only needed to build an ISO file**; if missing, clicking "BUILD ISO" offers to install it via winget (~100 MB). Not needed for writing to USB
+- **~15 GB free space** for the working folder (when writing an existing ISO, only about the size of install.wim, ~6 GB)
+- Duration: **20–40 minutes** depending on disk speed (writing an existing ISO to USB: 5–20 minutes)
 
-## Çalıştırma
+## Running
 
-**EXE olarak:** `Build-EXE.cmd` dosyasını çift tıklayın. `ps2exe` modülü yoksa kurulur ve aynı klasörde `WindowsIsoBuilder.exe` oluşur.
+**Ready-made EXE:** download `WindowsIsoBuilder.exe` from the [Releases](https://github.com/inversa-bilisim/windows-iso-builder/releases) page and run it.
 
-**Doğrudan script olarak:**
+**Build the EXE yourself:** double-click `Build-EXE.cmd`. It installs the `ps2exe` module if needed and creates `WindowsIsoBuilder.exe` in the same folder.
+
+**Run the script directly:**
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\WindowsIsoBuilder.ps1
 ```
 
-Arayüz dili Windows diline göre otomatik seçilir (Türkçe / English), sağ üstteki listeden değiştirilebilir.
+The interface language follows the Windows language (Turkish / English) and can be switched from the list at the top right.
 
 ---
 
-## Arayüz
+## Interface
 
-| Alan | Açıklama |
+| Field | Description |
 |---|---|
-| **Windows ISO** | Kaynak Windows 10/11 ISO'su. Seçildiğinde içindeki sürümler okunur ve Win10/Win11 otomatik algılanır |
-| **VirtIO ISO** *(isteğe bağlı)* | `virtio-win.iso` — Proxmox sürücüleri buradan alınır |
-| **Sürücü klasörü** *(isteğe bağlı)* | İçinde `.inf` dosyaları olan herhangi bir sürücü klasörü (alt klasörler taranır) |
-| **Çıktı** | **ISO dosyası** veya **USB disk (kurulum)**. USB seçiliyken **"Hazır ISO'yu değiştirmeden yaz"** işaretlenirse seçilen ISO hiç düzenlenmeden yazılır (düzenleme seçenekleri kapanır) |
-| **Çıktı ISO** | *(ISO modunda)* Oluşacak ISO'nun yolu. Seçilen sürüme göre otomatik adlandırılır (ör. `Win11-Pro-Custom.iso`) |
-| **USB disk** | *(USB modunda)* Yazılacak disk. Varsayılan olarak sadece USB/SD bağlantılı diskler listelenir; **Tüm diskler** işaretlenirse dahili diskler (SATA, NVMe vb.) de görünür. Yeni takılan disk için **Yenile** |
-| **Çalışma dizini** | Geçici dosyalar (varsayılan `C:\WindowsIsoBuild`). Her çalıştırmada temizlenir |
-| **Sürüm** | ISO'daki sürümlerden biri; varsayılan olarak *Pro* seçilir. ISO'ya yalnızca bu sürüm konur |
-| **Kullanıcı adı / Şifre** | Otomatik oluşturulacak yerel yönetici hesabı (şifre en az 4 karakter) |
-| **Dil** | Kurulum ve sistem dili (ör. `tr-TR`, `en-US`) |
-| **Gereksiz uygulamaları kaldır** | Aşağıdaki temizlik adımlarını açar/kapatır |
-| **Otomatik kurulum** | `autounattend.xml` ekler |
-| **Windows özellikleri** | ISO'da hazır açık gelecek isteğe bağlı özellikler |
+| **Windows ISO** | Source Windows 10/11 ISO. When selected, its editions are read and Win10/Win11 is detected automatically |
+| **VirtIO ISO** *(optional)* | `virtio-win.iso` — Proxmox drivers are taken from here |
+| **Driver folder** *(optional)* | Any driver folder containing `.inf` files (subfolders are scanned) |
+| **Output** | **ISO file** or **USB drive (setup)**. With USB selected, checking **"Write the ISO as-is (no changes)"** writes the chosen ISO without any modification (customization options are disabled) |
+| **Output ISO** | *(ISO mode)* Path of the ISO to create. Named automatically after the selected edition (e.g. `Win11-Pro-Custom.iso`) |
+| **USB drive** | *(USB mode)* Target drive. By default only USB/SD drives are listed; check **All disks** to also show internal disks (SATA, NVMe etc.). Use **Refresh** after plugging in a drive |
+| **Working folder** | Temporary files (default `C:\WindowsIsoBuild`). Cleaned on every run |
+| **Edition** | One of the editions in the ISO; *Pro* is selected by default. Only this edition is kept in the result |
+| **Username / Password** | Local administrator account to create automatically (password at least 4 characters) |
+| **Locale** | Setup and system language (e.g. `en-US`, `tr-TR`) |
+| **Remove bloatware** | Turns the cleanup steps below on/off |
+| **Unattended setup** | Adds `autounattend.xml` |
+| **Windows features** | Optional features to enable in the image |
 
-Ana düğme seçime göre **ISO OLUŞTUR** veya **USB'YE YAZ** olur. İşlem sırasında ilerleme alttaki log alanında canlı görünür; **İptal** ile durdurulabilir. Tam log: `%TEMP%\WindowsIsoBuilder-build.log`
+The main button reads **BUILD ISO** or **WRITE TO USB** depending on the output. Progress is shown live in the log area at the bottom; **Cancel** stops the job. Full log: `%TEMP%\WindowsIsoBuilder-build.log`
 
 ---
 
-## Özellikler
+## Features
 
-### Sürücüler
-- VirtIO ISO'dan Windows 11 (yoksa Windows 10) amd64 sürücüleri alınır: `viostor`, `vioscsi`, `NetKVM`, `Balloon`, `vioserial`, `vioinput`, `viorng`, `pvpanic`, `viofs`, `viogpudo`, `qxldod`, `fwcfg`, `smbus`
-- Sürücüler hem **kurulum ortamına** (`boot.wim` — disk ve ağ kurulumda görünür) hem de **kurulu sisteme** (`install.wim`) eklenir
-- VirtIO paketindeki MSI'lar (guest agent dahil) ISO içinde `\virtio\` klasörüne kopyalanır
-- Ek sürücü klasörü verilirse onun sürücüleri de eklenir
+### Drivers
+- Windows 11 (or Windows 10) amd64 drivers are taken from the VirtIO ISO: `viostor`, `vioscsi`, `NetKVM`, `Balloon`, `vioserial`, `vioinput`, `viorng`, `pvpanic`, `viofs`, `viogpudo`, `qxldod`, `fwcfg`, `smbus`
+- Drivers are added both to the **setup environment** (`boot.wim` — disks and network are visible during setup) and to the **installed system** (`install.wim`)
+- MSI packages from the VirtIO ISO (including the guest agent) are copied to the `\virtio\` folder of the result
+- Drivers from the optional driver folder are added as well
 
-### Donanım kontrolleri
-- TPM, Secure Boot, RAM, CPU ve depolama kontrolleri atlanır — Windows 11 desteklenmeyen donanıma / TPM'siz VM'e kurulabilir
-- İnternet / Microsoft hesabı zorunluluğu kaldırılır (`BypassNRO`)
+### Hardware checks
+- TPM, Secure Boot, RAM, CPU and storage checks are bypassed — Windows 11 installs on unsupported hardware / VMs without TPM
+- The internet / Microsoft account requirement is removed (`BypassNRO`)
 
-### Windows 10 desteği
-- Win10 ISO'larında ürün anahtarı sorulmadan kurulum devam eder (`ei.cfg`)
-- Win10'a özel ek özellikler listelenir: Internet Explorer 11, Windows Media Player, Windows Faks ve Tarama
+### Windows 10 support
+- Win10 setup continues without asking for a product key (`ei.cfg`)
+- Extra Win10-only features are listed: Internet Explorer 11, Windows Media Player, Windows Fax and Scan
 
-### Windows özellikleri (isteğe bağlı)
-.NET Framework 3.5, Hyper-V, Windows Sandbox, Sanal Makine Platformu, WSL, Telnet, TFTP, IIS, DirectPlay, SMB 1.0, XPS Yazıcı, Microsoft Print to PDF, Internet Yazdırma, İş Klasörleri.
-Varsayılan seçili: **.NET Framework 3.5** ve **Microsoft Print to PDF**.
+### Windows features (optional)
+.NET Framework 3.5, Hyper-V, Windows Sandbox, Virtual Machine Platform, WSL, Telnet, TFTP, IIS, DirectPlay, SMB 1.0, XPS Document Writer, Microsoft Print to PDF, Internet Printing, Work Folders.
+Selected by default: **.NET Framework 3.5** and **Microsoft Print to PDF**.
 
-### Gereksiz uygulama temizliği
-*("Gereksiz uygulamaları kaldır" işaretliyse)*
-- Kaldırılan uygulamalar: Xbox uygulamaları, Teams, Outlook (yeni), Copilot, Clipchamp, Bing Haberler/Hava/Arama, Office Hub, Solitaire, Kişiler, Power Automate, To Do, Geri Bildirim Merkezi, Haritalar, Telefon Bağlantısı, Groove/Filmler, Dev Home, Cortana, Hızlı Yardım, Alarmlar, Yapışkan Notlar ve Win10'a özel Skype, 3D Viewer, Paint 3D, Mixed Reality vb.
-- **OneDrive** kaldırılır ve yeniden kurulması engellenir
-- **Başlat menüsü** (Win11): tanıtım sabitlemeleri yerine Ayarlar, Dosya Gezgini, Edge, Hesap Makinesi, Not Defteri, Terminal, Fotoğraflar, Ekran Alıntısı Aracı, Denetim Masası
-- **Başlat menüsü** (Win10): kutucuksuz, boş düzen
-- **Görev çubuğu**: yalnızca Dosya Gezgini ve Edge sabitli
+### Bloatware removal
+*(when "Remove bloatware" is checked)*
+- Removed apps: Xbox apps, Teams, Outlook (new), Copilot, Clipchamp, Bing News/Weather/Search, Office Hub, Solitaire, People, Power Automate, To Do, Feedback Hub, Maps, Phone Link, Groove/Movies & TV, Dev Home, Cortana, Quick Assist, Alarms, Sticky Notes, plus Win10-only Skype, 3D Viewer, Paint 3D, Mixed Reality etc.
+- **OneDrive** is removed and prevented from reinstalling
+- **Start menu** (Win11): promoted pins are replaced with Settings, File Explorer, Edge, Calculator, Notepad, Terminal, Photos, Snipping Tool, Control Panel
+- **Start menu** (Win10): empty layout without tiles
+- **Taskbar**: only File Explorer and Edge pinned
 
-### Gizlilik ve reklamlar
-- Telemetri, hata raporlama, CEIP, reklam kimliği kapalı
-- Başlat menüsü önerileri, kilit ekranı reklamları, otomatik uygulama kurulumu kapalı
-- Windows Copilot, Haberler ve İlgi Alanları / Widget'lar, arama kutusu önerileri kapalı
-- Windows Spotlight kapalı
+### Privacy and ads
+- Telemetry, error reporting, CEIP and advertising ID disabled
+- Start menu suggestions, lock screen ads and silent app installs disabled
+- Windows Copilot, News and Interests / Widgets and search box suggestions disabled
+- Windows Spotlight disabled
 
-### Masaüstü ve görev çubuğu
-- Görev çubuğu **sola** hizalı; arama kutusu, Görev Görünümü, Widget ve Copilot düğmeleri gizli
-- Masaüstünde **Bu Bilgisayar** ve **kullanıcı klasörü** simgeleri
-- Dosya Gezgini **Bu Bilgisayar** ile açılır
-- Başlat menüsünde "En son kullanılanlar" kapalı
-- Print Screen tuşu Ekran Alıntısı Aracını açmaz
-- Ekran koruyucu kapalı, varsayılan Windows duvar kağıdı
-- Bu ayarlar her yeni kullanıcının ilk oturumunda da uygulanır (Active Setup)
+### Desktop and taskbar
+- Taskbar aligned **left**; search box, Task View, Widgets and Copilot buttons hidden
+- **This PC** and **user folder** icons on the desktop
+- File Explorer opens to **This PC**
+- "Recently added / recommended" in Start disabled
+- Print Screen key does not open the Snipping Tool
+- Screen saver off, default Windows wallpaper
+- These settings are also applied at every new user's first sign-in (Active Setup)
 
 ### Microsoft Edge
-İlk çalışma turu, oturum açma / senkronizasyon dayatması, "varsayılan tarayıcı yap" uyarıları, alışveriş asistanı, kenar çubuğu, yeni sekme içerikleri, arka planda çalışma ve telemetri kapalı.
+First-run experience, sign-in / sync prompts, "make default browser" nags, shopping assistant, sidebar, new tab content, background mode and telemetry are disabled.
 
-### Güç ve klavye
-- Hazırda bekletme ve **Hızlı Başlatma** kapalı
-- Uyku, ekran kapanma ve disk kapanma: **hiçbir zaman**
-- **NumLock**, giriş ekranında ve oturumlarda **açık** başlar
+### Power and keyboard
+- Hibernation and **Fast Startup** disabled
+- Sleep, display off and disk off: **never**
+- **NumLock** is **on** at the sign-in screen; within a session it remembers the user's last state
 
-### Otomatik kurulum (`autounattend.xml`)
-*("Otomatik kurulum" işaretliyse)*
-- Dil, klavye ve bölge seçilen dile göre ayarlanır; saat dilimi **Türkiye**
-- Lisans sözleşmesi, çevrimiçi hesap ve kablosuz ağ ekranları atlanır
-- Belirtilen kullanıcı adı ve şifreyle **yerel yönetici hesabı** oluşturulur
-- Gizlilik ayarları ekranı sorulmaz (tümü kapalı)
-- Kurulum sırasında güncelleme indirilmez
-- **Disk seçimi elle yapılır** — hangi diske kurulacağı kurulumda sorulur
+### Unattended setup (`autounattend.xml`)
+*(when "Unattended setup" is checked)*
+- Keyboard and region follow the selected locale; time zone is fixed to **Turkey** (`Turkey Standard Time`)
+- License agreement, online account and wireless setup screens are skipped
+- A **local administrator account** is created with the given username and password
+- The privacy settings screen is not shown (all off)
+- No updates are downloaded during setup
+- **Disk selection is manual** — setup asks which disk to install to
 
-### USB'ye yazma
-- Disk **tamamen silinir**, yazmadan önce disk adı ve boyutuyla onay istenir (varsayılan cevap *Hayır*)
-- Windows'un kurulu olduğu disk listede **hiçbir durumda görünmez**; dahili diskler sadece **Tüm diskler** işaretliyse görünür ve onay mesajında ayrıca uyarılır
-- Kaynak ISO'nun veya çalışma dizininin bulunduğu diske yazılamaz (yazma sırasında silineceği için)
-- Seçimden sonra disk değişirse (çıkarılıp başka disk takılırsa) yazma iptal edilir
-- Düzen: **MBR + tek FAT32 bölüm** → hem **UEFI** (Secure Boot açıkken de) hem **eski BIOS** bilgisayarlarda açılır
-- 4 GB'tan büyük `install.wim`, FAT32 sınırı nedeniyle otomatik olarak `install.swm` parçalarına bölünür (Windows Kurulumu bunu destekler)
-- Windows FAT32'yi en fazla 32 GB biçimlendirebildiği için 32 GB'tan büyük disklerde bölüm 32 GB olur, kalan alan boş (bölümsüz) kalır
-- USB NVMe kutuları ve harici SSD'ler de desteklenir
-- Rufus'tan farkı: ISO'daki `autounattend.xml` korunur, ek önyükleyici (UEFI:NTFS) gerekmez
+### Writing to USB
+- The drive is **completely erased**; confirmation with the drive name and size is required before writing (default answer *No*)
+- The disk Windows is running from is **never** listed; internal disks only appear when **All disks** is checked, with an extra warning in the confirmation
+- The disk holding the source ISO or the working folder cannot be selected (it would be erased while writing)
+- If the drive changes after selection (unplugged and another one inserted), writing is cancelled
+- Layout: **MBR + a single FAT32 partition** → boots on **UEFI** (including with Secure Boot on) and **legacy BIOS**
+- `install.wim` larger than 4 GB is automatically split into `install.swm` parts because of the FAT32 limit (supported by Windows Setup)
+- Windows can format FAT32 up to 32 GB, so on larger drives the partition is 32 GB and the rest is left unallocated
+- USB NVMe enclosures and external SSDs are supported
+- Unlike Rufus: the `autounattend.xml` in the ISO is preserved and no extra bootloader (UEFI:NTFS) is needed
 
 ---
 
-## Proxmox VM önerisi
+## Recommended Proxmox VM settings
 
-| Ayar | Değer |
+| Setting | Value |
 |---|---|
 | BIOS | OVMF (UEFI) + EFI disk |
-| TPM | Gerekmez |
+| TPM | Not required |
 | Disk | VirtIO SCSI |
-| Ağ | VirtIO |
+| Network | VirtIO |
 
-Kurulumdan sonra ISO içindeki `\virtio\` klasöründen **guest agent** MSI'ını kurun.
+After installation, install the **guest agent** MSI from the `\virtio\` folder on the ISO.
 
 ---
 
-## Notlar
+## Notes
 
-- Otomatik kurulumdaki şifre ISO içindeki `autounattend.xml` dosyasında **düz metin** olarak durur. ISO'yu paylaşacaksanız kurulumdan sonra şifreyi değiştirin.
-- Varsayılan kullanıcı `Inversa`, şifre `1234` — arayüzden değiştirin.
-- USB'ye yazma yarıda kesilirse disk kullanılamaz durumda kalabilir; yazmayı tekrar başlatmanız yeterlidir.
-- Bir işlem yarıda kalırsa (iptal, elektrik kesintisi vb.) bir sonraki çalıştırmada eski bağlantılar otomatik temizlenir. Temizlenemezse yönetici komut isteminde `dism /cleanup-wim` çalıştırıp çalışma dizinini silin veya bilgisayarı yeniden başlatın.
-- Arayüzsüz kullanım: program çalışırken motor `%TEMP%\Build-WindowsIso.ps1` olarak yazılır; bu dosya parametrelerle doğrudan da çalıştırılabilir:
+- The unattended password is stored in **plain text** in `autounattend.xml` inside the ISO. Change it after installation if you share the ISO.
+- Default username is `Inversa`, password `1234` — change them in the interface.
+- If writing to USB is interrupted, the drive may be left unusable; simply start the write again.
+- If a build is interrupted (cancel, power loss etc.), leftover mounts are cleaned up automatically on the next run. If that fails, run `dism /cleanup-wim` in an elevated command prompt and delete the working folder, or restart the computer.
+- Headless use: while the program runs, the engine is written to `%TEMP%\Build-WindowsIso.ps1`; it can also be run directly with parameters:
   ```powershell
   .\Build-WindowsIso.ps1 -WindowsIso C:\iso\Win11.iso -VirtioIso C:\iso\virtio-win.iso `
-      -OutputIso C:\iso\Win11-Proxmox.iso -Edition "Windows 11 Pro" -UserName Kullanici -Password "Sifre123" `
+      -OutputIso C:\iso\Win11-Proxmox.iso -Edition "Windows 11 Pro" -UserName User -Password "Pass123" `
       -Features NetFx3 [-KeepBloat] [-SkipUnattend]
   ```
-  USB'ye yazma parametreleri (`-Target Usb`, `-WriteOnly`, `-UsbDisk`, `-UsbDiskSig`) disk doğrulaması gerektirdiği için arayüzden kullanılması önerilir.
+  The USB parameters (`-Target Usb`, `-WriteOnly`, `-UsbDisk`, `-UsbDiskSig`) require disk verification, so using them through the interface is recommended.
 
 ---
 
-## Lisans
+## License
 
-[MIT](LICENSE) — kişisel ve ticari projelerde, açık veya kapalı kaynak olarak serbestçe kullanılabilir, değiştirilebilir ve dağıtılabilir. Tek şart, telif ve lisans notunun korunmasıdır. Yazılım "olduğu gibi" sunulur; disk silme işlemleri dahil kullanımdan doğacak sonuçlardan yazarlar sorumlu değildir.
+[MIT](LICENSE) — free to use, modify and distribute in personal and commercial projects, open or closed source. The only condition is keeping the copyright and license notice. The software is provided "as is"; the authors are not liable for any consequences of its use, including disk erasure.

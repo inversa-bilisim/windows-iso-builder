@@ -156,3 +156,9 @@ Kurulumdan sonra ISO içindeki `\virtio\` klasöründen **guest agent** MSI'ın�
       -Features NetFx3 [-KeepBloat] [-SkipUnattend]
   ```
   USB'ye yazma parametreleri (`-Target Usb`, `-WriteOnly`, `-UsbDisk`, `-UsbDiskSig`) disk doğrulaması gerektirdiği için arayüzden kullanılması önerilir.
+
+---
+
+## Lisans
+
+[MIT](LICENSE) — kişisel ve ticari projelerde, açık veya kapalı kaynak olarak serbestçe kullanılabilir, değiştirilebilir ve dağıtılabilir. Tek şart, telif ve lisans notunun korunmasıdır. Yazılım "olduğu gibi" sunulur; disk silme işlemleri dahil kullanımdan doğacak sonuçlardan yazarlar sorumlu değildir.

@@ -114,6 +114,11 @@ Varsayılan seçili: **.NET Framework 3.5** ve **Microsoft Print to PDF**.
 - Uyku, ekran kapanma ve disk kapanma: **hiçbir zaman**
 - **NumLock** giriş ekranında **açık** başlar; oturum içinde kullanıcının en son bıraktığı durumu hatırlar
 
+### Ağ
+- Yeni bağlanılan her ağ varsayılan olarak **Özel ağ** olur (Windows normalde Ortak ağ yapar)
+- Bu yalnızca ağa ilk bağlanışta bir kez yapılır; bir ağı sonradan elle Ortak'a çevirirseniz o ağa dokunulmaz
+- "Bilgisayarınızın bu ağda bulunabilir olmasını istiyor musunuz?" sorusu çıkmaz
+
 ### Otomatik kurulum (`autounattend.xml`)
 *("Otomatik kurulum" işaretliyse)*
 - Dil, klavye ve bölge seçilen dile göre ayarlanır; saat dilimi **Türkiye**

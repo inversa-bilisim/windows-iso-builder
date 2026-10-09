@@ -521,6 +521,68 @@ start explorer.exe
     RegSet $as IsInstalled 1
     Reg @("add", $as, "/ve", "/t", "REG_SZ", "/d", "WindowsIsoBuilder Kullanici Ayarlari", "/f")
 
+    # Aglar varsayilan olarak Ozel ag: her yeni ag ilk baglantida bir kez Ozel yapilir.
+    # Kullanici sonradan Ortak'a cevirirse dokunulmaz (islenen ag profilleri kaydedilir).
+    Log "Ozel ag varsayilani ayarlaniyor ..."
+    # "Bilgisayarinizin bu agda bulunabilir olmasini istiyor musunuz?" sorusu cikmasin (Hayir denirse ag Ortak olur)
+    Reg @("add", "HKLM\INSTSYS\ControlSet001\Control\Network\NewNetworkWindowOff", "/f")
+    $netPs1 = @"
+# WindowsIsoBuilder: yeni aglari bir kez Ozel ag yapar
+`$seen = 'HKLM:\SOFTWARE\WindowsIsoBuilder\PrivateNetwork'
+`$nl = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles'
+if (-not (Test-Path `$seen)) { New-Item -Path `$seen -Force | Out-Null }
+foreach (`$p in Get-NetConnectionProfile) {
+    # Kalici ag profili (Tanimlanamayan ag icin yoktur, o her seferinde Ozel yapilir)
+    `$prof = Get-ChildItem `$nl -ErrorAction SilentlyContinue | Where-Object { `$_.GetValue('ProfileName') -eq `$p.Name } | Select-Object -First 1
+    if (`$prof -and (Get-ItemProperty -Path `$seen -Name `$prof.PSChildName -ErrorAction SilentlyContinue)) { continue }
+    if (`$p.NetworkCategory -eq 'Public') {
+        Set-NetConnectionProfile -InterfaceIndex `$p.InterfaceIndex -NetworkCategory Private -ErrorAction SilentlyContinue
+    }
+    if (`$prof) { New-ItemProperty -Path `$seen -Name `$prof.PSChildName -Value 1 -PropertyType DWord -Force | Out-Null }
+}
+"@
+    Set-Content -Path "$mntInst\Windows\Setup\Scripts\PrivateNetwork.ps1" -Value $netPs1 -Encoding ASCII
+    # Ag baglandiginda (NetworkProfile olay 10000) SYSTEM olarak gizli calisan gorev
+    $netTask = @"
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo><Description>Yeni aglari varsayilan olarak Ozel ag yapar (WindowsIsoBuilder)</Description></RegistrationInfo>
+  <Triggers>
+    <EventTrigger>
+      <Enabled>true</Enabled>
+      <Subscription>&lt;QueryList&gt;&lt;Query Id="0" Path="Microsoft-Windows-NetworkProfile/Operational"&gt;&lt;Select Path="Microsoft-Windows-NetworkProfile/Operational"&gt;*[System[(EventID=10000)]]&lt;/Select&gt;&lt;/Query&gt;&lt;/QueryList&gt;</Subscription>
+      <Delay>PT3S</Delay>
+    </EventTrigger>
+  </Triggers>
+  <Principals><Principal id="Author"><UserId>S-1-5-18</UserId><RunLevel>HighestAvailable</RunLevel></Principal></Principals>
+  <Settings>
+    <MultipleInstancesPolicy>Queue</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <Hidden>true</Hidden>
+    <ExecutionTimeLimit>PT5M</ExecutionTimeLimit>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>powershell.exe</Command>
+      <Arguments>-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Windows\Setup\Scripts\PrivateNetwork.ps1"</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+"@
+    # schtasks /xml UTF-16 dosya ister
+    Set-Content -Path "$mntInst\Windows\Setup\Scripts\PrivateNetwork.xml" -Value $netTask -Encoding Unicode
+    # SetupComplete.cmd: kurulum bitince SYSTEM olarak bir kez calisir (autounattend olmadan da)
+    $setupComplete = @"
+@echo off
+schtasks /create /tn "WindowsIsoBuilder\PrivateNetwork" /xml "C:\Windows\Setup\Scripts\PrivateNetwork.xml" /f >nul 2>&1
+rem Kurulum sirasinda zaten baglanmis ag icin hemen bir kez calistir
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "C:\Windows\Setup\Scripts\PrivateNetwork.ps1" >nul 2>&1
+exit /b 0
+"@
+    Set-Content -Path "$mntInst\Windows\Setup\Scripts\SetupComplete.cmd" -Value $setupComplete -Encoding ASCII
+
     # Gorev cubugu varsayilan sabitlemeleri: sadece Dosya Gezgini ve Edge (Outlook/Store stub'lari gelmez)
     if (-not $KeepBloat) {
         $shellDir = "$mntInst\Users\Default\AppData\Local\Microsoft\Windows\Shell"

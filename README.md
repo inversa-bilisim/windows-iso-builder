@@ -114,6 +114,11 @@ First-run experience, sign-in / sync prompts, "make default browser" nags, shopp
 - Sleep, display off and disk off: **never**
 - **NumLock** is **on** at the sign-in screen; within a session it remembers the user's last state
 
+### Network
+- Every newly connected network defaults to **Private** (Windows normally makes it Public)
+- This happens only once, on the first connection; if you later switch a network to Public by hand, it is left alone
+- The "Do you want to allow your PC to be discoverable on this network?" prompt is not shown
+
 ### Unattended setup (`autounattend.xml`)
 *(when "Unattended setup" is checked)*
 - Keyboard and region follow the selected locale; time zone is fixed to **Turkey** (`Turkey Standard Time`)

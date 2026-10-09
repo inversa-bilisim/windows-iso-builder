@@ -80,8 +80,10 @@ The main button reads **BUILD ISO** or **WRITE TO USB** depending on the output.
 - Extra Win10-only features are listed: Internet Explorer 11, Windows Media Player, Windows Fax and Scan
 
 ### Windows features (optional)
-.NET Framework 3.5, Hyper-V, Windows Sandbox, Virtual Machine Platform, WSL, Telnet, TFTP, IIS, DirectPlay, SMB 1.0, XPS Document Writer, Microsoft Print to PDF, Internet Printing, Work Folders.
-Selected by default: **.NET Framework 3.5** and **Microsoft Print to PDF**.
+.NET Framework 3.5, Hyper-V, Windows Sandbox, Virtual Machine Platform, WSL, Telnet, TFTP, IIS, DirectPlay, SMB 1.0, XPS Document Writer, Microsoft Print to PDF, Internet Printing, Work Folders, WMIC.
+Selected by default: **.NET Framework 3.5**, **Microsoft Print to PDF** and **WMIC**.
+
+**WMIC:** Microsoft has removed the `wmic` command from Windows 11 entirely (it can no longer be added as a Feature on Demand). When selected, Microsoft's temporary package ([wmic_dlc.zip](https://support.microsoft.com/help/5067470)) is downloaded during the build and added to the image; this needs an internet connection. If the image already has WMIC (e.g. Windows 10), it is left alone. Microsoft does not recommend the package as a long-term solution.
 
 ### Bloatware removal
 *(when "Remove bloatware" is checked)*

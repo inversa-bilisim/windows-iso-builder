@@ -80,8 +80,10 @@ Ana düğme seçime göre **ISO OLUŞTUR** veya **USB'YE YAZ** olur. İşlem sı
 - Win10'a özel ek özellikler listelenir: Internet Explorer 11, Windows Media Player, Windows Faks ve Tarama
 
 ### Windows özellikleri (isteğe bağlı)
-.NET Framework 3.5, Hyper-V, Windows Sandbox, Sanal Makine Platformu, WSL, Telnet, TFTP, IIS, DirectPlay, SMB 1.0, XPS Yazıcı, Microsoft Print to PDF, Internet Yazdırma, İş Klasörleri.
-Varsayılan seçili: **.NET Framework 3.5** ve **Microsoft Print to PDF**.
+.NET Framework 3.5, Hyper-V, Windows Sandbox, Sanal Makine Platformu, WSL, Telnet, TFTP, IIS, DirectPlay, SMB 1.0, XPS Yazıcı, Microsoft Print to PDF, Internet Yazdırma, İş Klasörleri, WMIC.
+Varsayılan seçili: **.NET Framework 3.5**, **Microsoft Print to PDF** ve **WMIC**.
+
+**WMIC:** Microsoft, `wmic` komutunu Windows 11'den tamamen kaldırdı (artık isteğe bağlı özellik olarak da eklenemiyor). Seçilirse Microsoft'un yayımladığı geçici paket ([wmic_dlc.zip](https://support.microsoft.com/help/5067470)) ISO oluşturulurken indirilip imaja eklenir; bunun için internet bağlantısı gerekir. İmajda WMIC zaten varsa (ör. Windows 10) dokunulmaz. Microsoft bu paketi kalıcı bir çözüm olarak önermiyor.
 
 ### Gereksiz uygulama temizliği
 *("Gereksiz uygulamaları kaldır" işaretliyse)*

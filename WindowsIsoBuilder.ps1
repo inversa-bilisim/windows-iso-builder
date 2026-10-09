@@ -328,6 +328,31 @@ try {
     Mount-WindowsImage -ImagePath "$sources\install.wim" -Index 1 -Path $mntInst | Out-Null
     if ($haveDrivers) { Add-WindowsDriver -Path $mntInst -Driver $drvDir -Recurse -ForceUnsigned | Out-Null }
 
+    # WMIC: Windows 11'den kaldirildi, FoD olarak da gelmiyor. Microsoft'un gecici paketi (wmic_dlc) imaja kopyalanir,
+    # alias kaydi (mofcomp) WMI calisirken yapilmali: SetupComplete.cmd'de
+    $wmicAdded = $false
+    if ($Features -contains "WMIC") {
+        $Features = @($Features | Where-Object { $_ -ne "WMIC" })
+        $wbem = "$mntInst\Windows\System32\wbem"
+        if (Test-Path "$wbem\WMIC.exe") {
+            Log "WMIC imajda zaten var, eklenmedi."
+        } else {
+            Log "WMIC indiriliyor (Microsoft wmic_dlc paketi) ..."
+            $wmicZip = Join-Path $WorkDir "wmic_dlc.zip"; $wmicDir = Join-Path $WorkDir "wmic_dlc"
+            try {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+                Invoke-WebRequest -Uri "https://download.microsoft.com/download/1f01d660-d821-49b3-b247-7bc2fe9f4561/wmic_dlc.zip" -OutFile $wmicZip -UseBasicParsing
+                Expand-Archive -Path $wmicZip -DestinationPath $wmicDir -Force
+                $wmicSrc = Join-Path $wmicDir "wmic_dlc\src"
+                if (-not (Test-Path "$wmicSrc\WMIC.exe")) { throw "paket icinde WMIC.exe yok" }
+                Copy-Item -Path "$wmicSrc\*" -Destination $wbem -Recurse -Force
+                $wmicAdded = $true
+                Log "  + WMIC"
+            } catch { Write-Warning "WMIC eklenemedi (internet baglantisi gerekli): $_" }
+            finally { Remove-Item $wmicZip, $wmicDir -Recurse -Force -ErrorAction SilentlyContinue }
+        }
+    }
+
     if ($Features.Count -gt 0) {
         Log "Windows ozellikleri etkinlestiriliyor: $($Features -join ', ')"
         $sxs = "$sources\sxs"
@@ -579,6 +604,7 @@ foreach (`$p in Get-NetConnectionProfile) {
 schtasks /create /tn "WindowsIsoBuilder\PrivateNetwork" /xml "C:\Windows\Setup\Scripts\PrivateNetwork.xml" /f >nul 2>&1
 rem Kurulum sirasinda zaten baglanmis ag icin hemen bir kez calistir
 powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "C:\Windows\Setup\Scripts\PrivateNetwork.ps1" >nul 2>&1
+$(if ($wmicAdded) { "rem WMIC sinif ve alias kayitlari`r`nC:\Windows\System32\wbem\mofcomp.exe C:\Windows\System32\wbem\cli.mof >nul 2>&1`r`nC:\Windows\System32\wbem\mofcomp.exe C:\Windows\System32\wbem\cliegaliases.mof >nul 2>&1" })
 exit /b 0
 "@
     Set-Content -Path "$mntInst\Windows\Setup\Scripts\SetupComplete.cmd" -Value $setupComplete -Encoding ASCII
@@ -869,6 +895,7 @@ $script:FeatEn = @{
     "Internet Explorer 11" = "Internet Explorer 11"
     "Windows Media Player" = "Windows Media Player"
     "Windows Faks ve Tarama" = "Windows Fax and Scan"
+    "WMIC komut satiri araci (indirilir)" = "WMIC command-line tool (downloaded)"
 }
 function Get-FeatLabel($trName) { $v = $null; if ($script:UiLang -eq "en") { $v = $script:FeatEn[$trName] }; if (-not $v) { $v = $trName }; return "$v" }
 
@@ -1170,13 +1197,15 @@ $featureMap = [ordered]@{
     "Microsoft Print to PDF"                      = "Printing-PrintToPDFServices-Features"
     "Internet Yazdirma Istemcisi"                 = "Printing-Foundation-InternetPrinting-Client"
     "Is Klasorleri Istemcisi"                     = "WorkFolders-Client"
+    # DISM ozelligi degil: builder Microsoft'un wmic_dlc paketini indirip ekler
+    "WMIC komut satiri araci (indirilir)"         = "WMIC"
 }
 $featureMapWin10 = [ordered]@{
     "Internet Explorer 11"                        = "Internet-Explorer-Optional-amd64"
     "Windows Media Player"                        = "WindowsMediaPlayer"
     "Windows Faks ve Tarama"                      = "FaxServicesClientPackage"
 }
-$defaultFeatures = @("NetFx3", "Printing-PrintToPDFServices-Features")
+$defaultFeatures = @("NetFx3", "Printing-PrintToPDFServices-Features", "WMIC")
 function Update-FeatureList {
     $checked = @($lstFeatures.CheckedItems | ForEach-Object { "$_" })
     if ($checked.Count -eq 0) { $checked = @($featureMap.Keys | Where-Object { $defaultFeatures -contains $featureMap[$_] } | ForEach-Object { Get-FeatLabel $_ }) }
